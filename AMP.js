@@ -8,6 +8,95 @@ pathProps = ["fill", "stroke", "rotation", "stroke_width", "width", "height","to
     
 textProps = ["top", "left", "width", "height", "text", "font_size", "rotation", "color", "font_family", "layer", "controlledby"];
 
+function IsJsonString(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+function marker(XPos, YPos){
+    createObj ("path", {
+            "fill":"transparent",
+            "stroke":"#ff0000",
+            "rotation":0,
+            "stroke_width":5,
+            "width":10,
+            "height":10,
+            "top":YPos,
+            "left":XPos,
+            "scaleX":1,
+            "scaleY":1,
+            "controlledby":"-IdwiUbN7sGFmfnzYsM5",
+            "layer":"objects",
+            "_path":"[[\"M\",0,5],[\"C\",0,2.238576,2.238576,0,5,0],[\"C\",7.761424,0,10,2.238576,10,5],[\"C\",10,7.761424,7.761424,10,5,10],[\"C\",2.238576,10,0,7.761424,0,5]]",
+            "_id":"-JXZJLPM72xYy_agyFB8",
+            "_type":"path",
+            "_pageid":page});
+    return;
+}
+
+function rotatePath(Path, Rotation, scaleX, scaleY, PosX, PosY){
+    result = [];
+    newPath = [];
+    check = IsJsonString(Path);
+    if (check) oldPath = JSON.parse(Path);
+    if (check == false) oldPath = Path;
+    oldMaxX = 0;
+    oldMaxY = 0;
+    rads = 3.1415927 * Rotation / 180;
+    for( oP = 0; oP < oldPath.length; oP++ )
+    {
+        for (x = 0; x < (oldPath[oP].length-1)/2; x++) 
+        {
+            if (oldPath[oP][x*2+1] > oldMaxX) oldMaxX = oldPath[oP][x*2+1];
+            if (oldPath[oP][x*2+2] > oldMaxY) oldMaxY = oldPath[oP][x*2+2];
+        }
+    }
+    for( oP = 0; oP < oldPath.length; oP++ )
+    {
+        temp = [];
+        temp[0] = oldPath[oP][0];
+        for (x = 0; x < (oldPath[oP].length-1)/2; x++) 
+        {
+            temp[x*2+1]=Math.cos(rads) * (oldPath[oP][x*2+1] - oldMaxX / 2) * scaleX + Math.sin(rads) * (oldPath[oP][x*2+2] - oldMaxY / 2) * scaleY;
+            temp[x*2+2]=Math.cos(rads) * (oldPath[oP][x*2+2] - oldMaxY / 2) * scaleY - Math.sin(rads) * (oldPath[oP][x*2+1] - oldMaxX / 2) * scaleX;
+        }
+        newPath[oP] = temp;
+    }
+    newMaxX = 0;
+    newMaxY = 0;
+    newMinX = newPath[0][1];
+    newMinY = newPath[0][2];
+    for( nP = 0; nP < newPath.length; nP++ )
+    {
+        for (x = 0; x < (newPath[nP].length-1)/2; x++) 
+        {
+            if (newPath[nP][x*2+1] > newMaxX) newMaxX = newPath[nP][x*2+1];
+            if (newPath[nP][x*2+2] > newMaxY) newMaxY = newPath[nP][x*2+2];
+            if (newPath[nP][x*2+1] < newMinX) newMinX = newPath[nP][x*2+1];
+            if (newPath[nP][x*2+2] < newMinY) newMinY = newPath[nP][x*2+2];
+        }
+    }
+    for( nP = 0; nP < newPath.length; nP++ )
+    {
+        for (x = 0; x < (newPath[nP].length-1)/2; x++) 
+        {
+            newPath[nP][x*2+1] = newPath[nP][x*2+1] - newMinX;
+            newPath[nP][x*2+2] = newPath[nP][x*2+2] - newMinY;
+        }
+    }
+    Pos = [PosX+(newMaxX+newMinX)/2, PosY+(newMaxY+newMinY)/2];
+    Dims = [newMaxX - newMinX, newMaxY - newMinY];
+    jPath = JSON.stringify(newPath);
+    result[0] = jPath;
+    result[1] = Pos;
+    result[2] = Dims;
+    return result;
+}
+
 on("chat:message", function(msg) {
     if (msg.content.substring(0,18) == "!Create Conversion")
     {
@@ -31,7 +120,6 @@ on("chat:message", function(msg) {
                     avatar :  Base[0].get("imgsrc")
                 });
             }
-            
             catch(err)
             {
 
@@ -68,7 +156,6 @@ on("chat:message", function(msg) {
             });
             for ( i = 0; i < paths.length; i++ )
             {
-                //log(paths[i]);
                 n = "Path."+i+".type";
                 setup(storage, n, "path");
                 {
@@ -86,7 +173,6 @@ on("chat:message", function(msg) {
             });
             for ( i = 0; i < texts.length; i++ )
             {
-                //log(paths[i]);
                 n = "Text."+i+".type";
                 setup(storage, n, "text");
                 {
@@ -126,7 +212,7 @@ on("chat:message", function(msg) {
             baseTopAdj = Base[0].get("top") - storageList[4].get("current");
             baseWidth = Base[0].get("width") / storageList[5].get("current");
             baseHeight = Base[0].get("height") / storageList[6].get("current");
-            baseScale = Math.sqrt(baseWidth * baseWidth + baseHeight * baseHeight);
+            baseScale = (baseWidth  + baseHeight)/2;
             baseRotation = Base[0].get("rotation") - storageList[7].get("current");
             if ( Base[0].get("flipv") !== storageList[10].get("current") ) baseHeight = baseHeight * -1;
             if ( Base[0].get("fliph") !== storageList[11].get("current") ) baseWidth = baseWidth * -1;
@@ -147,14 +233,6 @@ on("chat:message", function(msg) {
                     if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - storageList[i+7].get("current") + baseRotation
                     else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - storageList[i+7].get("current") + baseRotation
                     else finalRotation = storageList[i+7].get("current") + baseRotation;
-                    //log(storageList[i+1].get("current")+" "+storageList[i+5].get("current")+" "+storageList[i+6].get("current")
-                    //    +" "+finalRotation+" "+storageList[i+8].get("current"));
-                    /*newImg = createObj("graphic", 
-                    {"_pageid":page,"left":595,"top":630,"width":1190,"height":1260,"rotation":0,
-                    "layer":"objects","isdrawing":false,"flipv":false,"fliph":false,
-                    "imgsrc":"https://s3.amazonaws.com/files.d20.io/images/5677737/3T1P9CzEdMr6gtDKYA01ag/thumb.JPG?1411344476", "gmnotes":"","controlledby":"","bar1_value":"","bar1_max":"","bar1_link":"","bar2_value":"","bar2_max":"","bar2_link":"","bar3_value":"","bar3_max":"","bar3_link":"","represents":"","aura1_radius":"","aura1_color":"#FFFF99","aura1_square":false,"aura2_radius":"","aura2_color":"#59E594","aura2_square":false,"tint_color":"transparent","statusmarkers":"","showname":false,"showplayers_name":false,"showplayers_bar1":false,"showplayers_bar2":false,"showplayers_bar3":false,"showplayers_aura1":false,"showplayers_aura2":false,"playersedit_name":true,"playersedit_bar1":true,"playersedit_bar2":true,"playersedit_bar3":true,"playersedit_aura1":true,"playersedit_aura2":true,"light_radius":"","light_dimradius":"","light_otherplayers":false,"light_hassight":false,"light_angle":"","light_losangle":"","sides":"","currentSide":0,"lastmove":"594.9999999999997,174.9999999999999","_type":"graphic","_subtype":"token","_cardid":""});
-                    */
-                    log(storageList[i+1].get("current"));
                     newImg = createObj("graphic", 
                         {"_pageid":page,
                         "imgsrc":storageList[i+1].get("current"),
@@ -221,21 +299,23 @@ on("chat:message", function(msg) {
                     rads = 3.1415927*baseRotation/180;
                     finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
                     finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
+                    shiftX = finalX - (storageList[i+8].get("current") - baseLeft) - Base[0].get("left");
+                    shiftY = finalY - (storageList[i+7].get("current") - baseTop) - Base[0].get("top");
+                    newP = rotatePath(storageList[i+13].get("current"),baseRotation * -1 - storageList[i+3].get("current"),baseWidth,baseHeight,storageList[i+8].get("current"),storageList[i+7].get("current"));
                     newPath = createObj("path", 
                         {"_pageid":page,
                         "fill":storageList[i+1].get("current"),
                         "stroke":storageList[i+2].get("current"),
-                        "rotation":storageList[i+3].get("current") + baseRotation,
+                        "rotation":0,
                         "stroke_width":storageList[i+4].get("current"),
-                        "width":storageList[i+5].get("current"),
-                        "height":storageList[i+6].get("current"),
-                        "top":finalY,
-                        "left":finalX,
-                        "scaleX":storageList[i+9].get("current") * baseWidth,
-                        "scaleY":storageList[i+10].get("current") * baseHeight,
-                        "controlledby":storageList[i+11].get("current"),
+                        "width":newP[2][0],
+                        "height":newP[2][1],
+                        "top":newP[1][1]-baseTop+Base[0].get("top")+shiftY,
+                        "left":newP[1][0]-baseLeft+Base[0].get("left")+shiftX,
+                        "scaleX":1,
+                        "scaleY":1,
                         "layer":storageList[i+12].get("current"),
-                        "_path":storageList[i+13].get("current")
+                        "_path":newP[0]
                     });
                 }
                 if ( n == ".type" && storageList[i].get("current") == "text") 
@@ -275,3 +355,4 @@ on("chat:message", function(msg) {
         }
     }
 });
+   
