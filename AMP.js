@@ -1,3 +1,28 @@
+//A.M.P.
+//Advanced Mapping Procedurals
+
+/*The MIT License (MIT)
+
+Copyright (c) 2014 esampson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.*/
+
 graphicsProps = ["imgsrc", "name", "left", "top", "width", "height", "rotation", "layer", "isdrawing","flipv","fliph","gmnotes","controlledby","bar1_value","bar1_max","bar1_link","bar2_value","bar2_max","bar2_link","bar3_value","bar3_max","bar3_link","represents",
     "aura1_radius","aura1_color","aura1_square","aura2_radius","aura2_color","aura2_square","tint_color","statusmarkers","showname","showplayers_name","showplayers_bar1","showplayers_bar2","showplayers_bar3",
     "showplayers_aura1","showplayers_aura2","playersedit_name","playersedit_bar1","playersedit_bar2","playersedit_bar3","playersedit_aura1","playersedit_aura2","light_radius","light_dimradius","light_otherplayers","light_hassight","light_angle",
@@ -101,7 +126,6 @@ on("chat:message", function(msg) {
     if (msg.content.substring(0,18) == "!Create Conversion")
     {
         baseName = msg.content.substr(19);
-        log(baseName);
         sendChat(msg.who,"Attempting to create conversion");
         page = Campaign().get("playerpageid");
         Base = findObjs({
@@ -109,7 +133,6 @@ on("chat:message", function(msg) {
             _pageid: page,
             name: baseName
         });
-        log(Base);
         if (Base.length == 1)
         {
             try 
@@ -135,7 +158,6 @@ on("chat:message", function(msg) {
                 _type: "graphic",
                 _pageid: page
             });
-            log(graphics);
             for ( i = 0; i < graphics.length; i++ )
             {
                 if (graphics[i].get("name") !== baseName) 
@@ -158,13 +180,26 @@ on("chat:message", function(msg) {
             {
                 n = "Path."+i+".type";
                 setup(storage, n, "path");
+                cPath=rotatePath(paths[i].get("_path"),0-paths[i].get("rotation"),paths[i].get("scaleX"),paths[i].get("scaleY"),paths[i].get("left"),
+                    paths[i].get("top"));
                 {
-                    for ( p = 0; p < pathProps.length; p++ )
+                    setup(storage, "Path"+"."+i+".fill",  paths[i].get("fill"));
+                    setup(storage, "Path"+"."+i+".stroke",  paths[i].get("stroke"));
+                    setup(storage, "Path"+"."+i+".rotation", 0);
+                    setup(storage, "Path"+"."+i+".stroke_width",  paths[i].get("stroke_width"));
+                    setup(storage, "Path"+"."+i+".width", cPath[2][0]);
+                    setup(storage, "Path"+"."+i+".height", cPath[2][1]);
+                    setup(storage, "Path"+"."+i+".top", cPath[1][1]);
+                    setup(storage, "Path"+"."+i+".left", cPath[1][0]);
+                    setup(storage, "Path"+"."+i+".scaleX", 1);
+                    setup(storage, "Path"+"."+i+".scaleY", 1);
+                    for ( p = 10; p < pathProps.length-1; p++ )
                     {
                         n = "Path"+"."+i+"."+pathProps[p];
                         val = paths[i].get(pathProps[p]);
                         setup(storage, n, val);
                     }
+                    setup(storage, "Path"+"."+i+"_path", cPath[0]);
                 }
             }
             texts = findObjs({
@@ -355,4 +390,3 @@ on("chat:message", function(msg) {
         }
     }
 });
-   
