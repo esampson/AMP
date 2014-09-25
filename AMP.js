@@ -33,6 +33,32 @@ pathProps = ["fill", "stroke", "rotation", "stroke_width", "width", "height","to
     
 textProps = ["top", "left", "width", "height", "text", "font_size", "rotation", "color", "font_family", "layer", "controlledby"];
 
+(function() {
+    oldCreateObj = createObj;
+    createObj = function() {
+        obj = oldCreateObj.apply(this, arguments);
+        if (obj.get("_type") == 'attribute') obj.fbpath = '/char-attribs/char/'+ obj.get("_characterid") +'/'+ obj.get("_id");
+        return obj;
+    }
+}())
+    
+function setup(obj, attr, base) {
+    attribute = findObjs({
+        _type: "attribute",
+        _characterid: obj.get("_id"),
+        name: attr
+    })[0];
+    if (attribute == undefined) {
+        object = createObj("attribute", {
+            _characterid: obj.get("_id"),
+            name: attr,
+            current: base,
+            max: base,
+        });
+    }
+    return;
+}
+
 function IsJsonString(str) {
     try {
         JSON.parse(str);
