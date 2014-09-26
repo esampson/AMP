@@ -43,19 +43,11 @@ textProps = ["top", "left", "width", "height", "text", "font_size", "rotation", 
 }())
     
 function setup(obj, attr, base) {
-    attribute = findObjs({
-        _type: "attribute",
+    object = createObj("attribute", {
         _characterid: obj.get("_id"),
-        name: attr
-    })[0];
-    if (attribute == undefined) {
-        object = createObj("attribute", {
-            _characterid: obj.get("_id"),
-            name: attr,
-            current: base,
-            max: base,
-        });
-    }
+        name: attr,
+        current: base,
+    });
     return;
 }
 
@@ -66,27 +58,6 @@ function IsJsonString(str) {
         return false;
     }
     return true;
-}
-
-function marker(XPos, YPos){
-    createObj ("path", {
-            "fill":"transparent",
-            "stroke":"#ff0000",
-            "rotation":0,
-            "stroke_width":5,
-            "width":10,
-            "height":10,
-            "top":YPos,
-            "left":XPos,
-            "scaleX":1,
-            "scaleY":1,
-            "controlledby":"-IdwiUbN7sGFmfnzYsM5",
-            "layer":"objects",
-            "_path":"[[\"M\",0,5],[\"C\",0,2.238576,2.238576,0,5,0],[\"C\",7.761424,0,10,2.238576,10,5],[\"C\",10,7.761424,7.761424,10,5,10],[\"C\",2.238576,10,0,7.761424,0,5]]",
-            "_id":"-JXZJLPM72xYy_agyFB8",
-            "_type":"path",
-            "_pageid":page});
-    return;
 }
 
 function rotatePath(Path, Rotation, scaleX, scaleY, PosX, PosY){
@@ -154,6 +125,8 @@ on("chat:message", function(msg) {
         baseName = msg.content.substr(19);
         sendChat(msg.who,"Attempting to create conversion");
         page = Campaign().get("playerpageid");
+        Data = [];
+		dIndex = 0;
         Base = findObjs({
             _type: "graphic",
             _pageid: page,
@@ -173,13 +146,12 @@ on("chat:message", function(msg) {
             {
 
             }
-            setup(storage, baseName+".0.type", "base");
+            dObject = [];
+            dObject[0] = "base";
             for ( p = 0; p < graphicsProps.length; p++ )
-            {
-                n = Base[0].get("name")+".0."+graphicsProps[p];
-                val = Base[0].get(graphicsProps[p]);
-                setup(storage, n, val);
-            }
+				dObject[p+1] = Base[0].get(graphicsProps[p]);
+            Data[dIndex] = JSON.stringify(dObject);
+			dIndex++;
             graphics = findObjs({
                 _type: "graphic",
                 _pageid: page
@@ -188,14 +160,12 @@ on("chat:message", function(msg) {
             {
                 if (graphics[i].get("name") !== baseName) 
                 {
-                    n = "Graphic."+i+".type";
-                    setup(storage, n, "graphic");
+                    dObject = [];
+                    dObject[0] = "graphic";
                     for ( p = 0; p < graphicsProps.length; p++ )
-                    {
-                        n = "Graphic."+i+"."+graphicsProps[p];
-                        val = graphics[i].get(graphicsProps[p]);
-                        setup(storage, n, val);
-                    }
+						dObject[p+1] = graphics[i].get(graphicsProps[p]);
+                    Data[dIndex] = JSON.stringify(dObject);
+					dIndex++;
                 }
             }
             paths = findObjs({
@@ -204,29 +174,25 @@ on("chat:message", function(msg) {
             });
             for ( i = 0; i < paths.length; i++ )
             {
-                n = "Path."+i+".type";
-                setup(storage, n, "path");
+                dObject = [];
+                dObject[0] = "path";
                 cPath=rotatePath(paths[i].get("_path"),0-paths[i].get("rotation"),paths[i].get("scaleX"),paths[i].get("scaleY"),paths[i].get("left"),
                     paths[i].get("top"));
-                {
-                    setup(storage, "Path"+"."+i+".fill",  paths[i].get("fill"));
-                    setup(storage, "Path"+"."+i+".stroke",  paths[i].get("stroke"));
-                    setup(storage, "Path"+"."+i+".rotation", 0);
-                    setup(storage, "Path"+"."+i+".stroke_width",  paths[i].get("stroke_width"));
-                    setup(storage, "Path"+"."+i+".width", cPath[2][0]);
-                    setup(storage, "Path"+"."+i+".height", cPath[2][1]);
-                    setup(storage, "Path"+"."+i+".top", cPath[1][1]);
-                    setup(storage, "Path"+"."+i+".left", cPath[1][0]);
-                    setup(storage, "Path"+"."+i+".scaleX", 1);
-                    setup(storage, "Path"+"."+i+".scaleY", 1);
-                    for ( p = 10; p < pathProps.length-1; p++ )
-                    {
-                        n = "Path"+"."+i+"."+pathProps[p];
-                        val = paths[i].get(pathProps[p]);
-                        setup(storage, n, val);
-                    }
-                    setup(storage, "Path"+"."+i+"_path", cPath[0]);
-                }
+                dObject[1] = paths[i].get("fill");
+                dObject[2] = paths[i].get("stroke");
+                dObject[3] = 0;
+                dObject[4] = paths[i].get("stroke_width");
+                dObject[5] = cPath[2][0];
+                dObject[6] = cPath[2][1];
+                dObject[7] = cPath[1][1];
+                dObject[8] = cPath[1][0];
+                dObject[9] = 1;
+                dObject[10] = 1;
+                for ( p = 10; p < pathProps.length-1; p++ )
+					dObject[p+1] = paths[i].get(pathProps[p]);
+                dObject[pathProps.length] = cPath[0];
+                Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);;
+				dIndex++;
             }
             texts = findObjs({
                 _type: "text",
@@ -234,17 +200,14 @@ on("chat:message", function(msg) {
             });
             for ( i = 0; i < texts.length; i++ )
             {
-                n = "Text."+i+".type";
-                setup(storage, n, "text");
-                {
-                    for ( p = 0; p < textProps.length; p++ )
-                    {
-                        n = "Text"+"."+i+"."+textProps[p];
-                        val = texts[i].get(textProps[p]);
-                        setup(storage, n, val);
-                    }
-                }
+                dObject = [];
+                dObject[0] = "text";
+                for ( p = 0; p < textProps.length; p++ )
+					dObject[p+1] = texts[i].get(textProps[p]);
+                Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);;
+				dIndex++
             }
+            setup(storage,"Data",Data);
             sendChat(msg.who,"Conversion for " + baseName + " created");
         } else sendChat(msg.who,"Naming problem with conversion");
     } else if (msg.content.substring(0,8) == "!Convert")
@@ -262,150 +225,150 @@ on("chat:message", function(msg) {
             name: baseName
         });
         if (Base.length == 1 && Storage.length == 1)
-        {   
+        {
             storageList = findObjs({
                 _type: "attribute",
                 _characterid: Storage[0].get("_id"),
+                name:"Data"
             });
-            baseLeft = storageList[3].get("current");
-            baseTop = storageList[4].get("current");
-            baseLeftAdj = Base[0].get("left") - storageList[3].get("current");
-            baseTopAdj = Base[0].get("top") - storageList[4].get("current");
-            baseWidth = Base[0].get("width") / storageList[5].get("current");
-            baseHeight = Base[0].get("height") / storageList[6].get("current");
+            jData = storageList[0].get("current");
+            Data = [];
+            for (i = 0; i < jData.length; i++)
+                Data[i] = JSON.parse(jData[i]);
+            baseLeft = Data[0][3];
+            baseTop = Data[0][4];
+            baseLeftAdj = Base[0].get("left") - Data[0][3];
+            baseTopAdj = Base[0].get("top") - Data[0][4];
+            baseWidth = Base[0].get("width") / Data[0][5];
+            baseHeight = Base[0].get("height") / Data[0][6];
             baseScale = (baseWidth  + baseHeight)/2;
-            baseRotation = Base[0].get("rotation") - storageList[7].get("current");
-            if ( Base[0].get("flipv") !== storageList[10].get("current") ) baseHeight = baseHeight * -1;
-            if ( Base[0].get("fliph") !== storageList[11].get("current") ) baseWidth = baseWidth * -1;
-            baseFlipH = storageList[7].get("current");
-            for ( i = 0; i < storageList.length; i++) {
-                n = storageList[i].get("name");
-                n = n.substr(n.length-5);
-                if ( n == ".type" && storageList[i].get("current") == "graphic") 
+            baseRotation = Base[0].get("rotation") - Data[0][7];
+            if ( Base[0].get("flipv") !== Data[0][10] ) baseHeight = baseHeight * -1;
+            if ( Base[0].get("fliph") !== Data[0][11] ) baseWidth = baseWidth * -1;
+            for ( i = 1; i < Data.length; i++) {
+                if ( Data[i][0] == "graphic") 
                 {
-                    s = storageList[i].get("name");
-                    s = s.substring(0,s.length-5);
-                    r = s.split(".")[0];
-                    baseX = (storageList[i+3].get("current") - baseLeft) * baseWidth;
-                    baseY = (storageList[i+4].get("current") - baseTop) * baseHeight;
+                    baseX = (Data[i][3] - baseLeft) * baseWidth;
+                    baseY = (Data[i][4] - baseTop) * baseHeight;
                     rads = 3.1415927*baseRotation/180;
                     finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
                     finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
-                    if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - storageList[i+7].get("current") + baseRotation
-                    else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - storageList[i+7].get("current") + baseRotation
-                    else finalRotation = storageList[i+7].get("current") + baseRotation;
+                    if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i][7] + baseRotation
+                    else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i][7] + baseRotation
+                    else finalRotation = Data[i][7] + baseRotation;
                     newImg = createObj("graphic", 
                         {"_pageid":page,
-                        "imgsrc":storageList[i+1].get("current"),
-                        "name":storageList[i+2].get("current"),
+                        "imgsrc":Data[i][1],
+                        "name":Data[i][2],
                         "left":finalX,
                         "top":finalY,
-                        "width":storageList[i+5].get("current") * baseScale,
-                        "height":storageList[i+6].get("current") * baseScale,
+                        "width":Data[i][5] * baseScale,
+                        "height":Data[i][6] * baseScale,
                         "rotation":finalRotation,
-                        "layer":storageList[i+8].get("current"),
-                        "isdrawing":storageList[i+9].get("current"),
-                        "flipv":storageList[i+10].get("current"),
-                        "fliph":storageList[i+11].get("current"),
-                        "gmnotes":storageList[i+12].get("current"),
-                        "controlledby":storageList[i+13].get("current"),
-                        "bar1_value":storageList[i+14].get("current"),
-                        "bar1_max":storageList[i+15].get("current"),
-                        "bar1_link":storageList[i+16].get("current"),
-                        "bar2_value":storageList[i+17].get("current"),
-                        "bar2_max":storageList[i+18].get("current"),
-                        "bar2_link":storageList[i+19].get("current"),
-                        "bar3_value":storageList[i+20].get("current"),
-                        "bar3_max":storageList[i+21].get("current"),
-                        "bar3_link":storageList[i+22].get("current"),
-                        "represents":storageList[i+23].get("current"),
-                        "aura1_radius":storageList[i+24].get("current"),
-                        "aura1_color":storageList[i+25].get("current"),
-                        "aura1_square":storageList[i+26].get("current"),
-                        "aura2_radius":storageList[i+27].get("current"),
-                        "aura2_color":storageList[i+28].get("current"),
-                        "aura2_square":storageList[i+29].get("current"),
-                        "tint_color":storageList[i+30].get("current"),
-                        "statusmarkers":storageList[i+31].get("current"),
-                        "showname":storageList[i+32].get("current"),
-                        "showplayers_name":storageList[i+33].get("current"),
-                        "showplayers_bar1":storageList[i+34].get("current"),
-                        "showplayers_bar2":storageList[i+35].get("current"),
-                        "showplayers_bar3":storageList[i+36].get("current"),
-                        "showplayers_aura1":storageList[i+37].get("current"),
-                        "showplayers_aura2":storageList[i+38].get("current"),
-                        "playersedit_name":storageList[i+39].get("current"),
-                        "playersedit_bar1":storageList[i+40].get("current"),
-                        "playersedit_bar2":storageList[i+41].get("current"),
-                        "playersedit_bar3":storageList[i+42].get("current"),
-                        "playersedit_aura1":storageList[i+43].get("current"),
-                        "playersedit_aura2":storageList[i+44].get("current"),
-                        "light_radius":storageList[i+45].get("current") * baseScale,
-                        "light_dimradius":storageList[i+46].get("current") * baseScale,
-                        "light_otherplayers":storageList[i+47].get("current"),
-                        "light_hassight":storageList[i+48].get("current"),
-                        "light_angle":storageList[i+49].get("current"),
-                        "light_losangle":storageList[i+50].get("current"),
-                        "sides":storageList[i+51].get("current"),
-                        "currentSide":storageList[i+52].get("current"),
-                        "lastmove":storageList[i+53].get("current"),
-                        "_subtype":storageList[i+54].get("current"),
-                        "_cardid":storageList[i+55].get("current") 
-                    }); 
+                        "layer":Data[i][8],
+                        "isdrawing":Data[i][9],
+                        "flipv":Data[i][0],
+                        "fliph":Data[i][11],
+                        "gmnotes":Data[i][12],
+                        "controlledby":Data[i][13],
+                        "bar1_value":Data[i][14],
+                        "bar1_max":Data[i][15],
+                        "bar1_link":Data[i][16],
+                        "bar2_value":Data[i][17],
+                        "bar2_max":Data[i][18],
+                        "bar2_link":Data[i][19],
+                        "bar3_value":Data[i][20],
+                        "bar3_max":Data[i][21],
+                        "bar3_link":Data[i][22],
+                        "represents":Data[i][23],
+                        "aura1_radius":Data[i][24],
+                        "aura1_color":Data[i][25],
+                        "aura1_square":Data[i][26],
+                        "aura2_radius":Data[i][27],
+                        "aura2_color":Data[i][28],
+                        "aura2_square":Data[i][29],
+                        "tint_color":Data[i][30],
+                        "statusmarkers":Data[i][31],
+                        "showname":Data[i][32],
+                        "showplayers_name":Data[i][33],
+                        "showplayers_bar1":Data[i][34],
+                        "showplayers_bar2":Data[i][35],
+                        "showplayers_bar3":Data[i][36],
+                        "showplayers_aura1":Data[i][37],
+                        "showplayers_aura2":Data[i][38],
+                        "playersedit_name":Data[i][39],
+                        "playersedit_bar1":Data[i][40],
+                        "playersedit_bar2":Data[i][41],
+                        "playersedit_bar3":Data[i][42],
+                        "playersedit_aura1":Data[i][43],
+                        "playersedit_aura2":Data[i][44],
+                        "light_radius":Data[i][45] * baseScale,
+                        "light_dimradius":Data[i][46] * baseScale,
+                        "light_otherplayers":Data[i][47],
+                        "light_hassight":Data[i][48],
+                        "light_angle":Data[i][49],
+                        "light_losangle":Data[i][50],
+                        "sides":Data[i][51],
+                        "currentSide":Data[i][52],
+                        "lastmove":Data[i][53],
+                        "_subtype":Data[i][54],
+                        "_cardid":Data[i][55]
+                    });
                 } 
-                if ( n == ".type" && storageList[i].get("current") == "path") 
-                {
-                    baseX = (storageList[i+8].get("current") - baseLeft) * baseWidth;
-                    baseY = (storageList[i+7].get("current") - baseTop) * baseHeight;
+                if ( Data[i][0] == "path") 
+                {                        
+                    baseX = (Data[i][8] - baseLeft) * baseWidth;
+                    baseY = (Data[i][7] - baseTop) * baseHeight;
                     rads = 3.1415927*baseRotation/180;
                     finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
                     finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
-                    shiftX = finalX - (storageList[i+8].get("current") - baseLeft) - Base[0].get("left");
-                    shiftY = finalY - (storageList[i+7].get("current") - baseTop) - Base[0].get("top");
-                    newP = rotatePath(storageList[i+13].get("current"),baseRotation * -1 - storageList[i+3].get("current"),baseWidth,baseHeight,storageList[i+8].get("current"),storageList[i+7].get("current"));
+                    shiftX = finalX - (Data[i][8] - baseLeft) - Base[0].get("left");
+                    shiftY = finalY - (Data[i][7] - baseTop) - Base[0].get("top");
+                    newP = rotatePath(Data[i][13], baseRotation * -1 - Data[i][3], baseWidth, baseHeight, Data[i][8],Data[i][7]);
+            
                     newPath = createObj("path", 
                         {"_pageid":page,
-                        "fill":storageList[i+1].get("current"),
-                        "stroke":storageList[i+2].get("current"),
+                        "fill":Data[i][1],
+                        "stroke":Data[i][2],
                         "rotation":0,
-                        "stroke_width":storageList[i+4].get("current"),
+                        "stroke_width":Data[i][4],
                         "width":newP[2][0],
                         "height":newP[2][1],
                         "top":newP[1][1]-baseTop+Base[0].get("top")+shiftY,
                         "left":newP[1][0]-baseLeft+Base[0].get("left")+shiftX,
                         "scaleX":1,
                         "scaleY":1,
-                        "layer":storageList[i+12].get("current"),
-                        "_path":newP[0]
-                    });
+                        "layer":Data[i][12],
+                        "_path":newP[0] 
+                    }); 
                 }
-                if ( n == ".type" && storageList[i].get("current") == "text") 
+                if ( Data[i][0] == "text") 
                 {
-                    baseX = (storageList[i+2].get("current") - baseLeft) * baseWidth;
-                    baseY = (storageList[i+1].get("current") - baseTop) * baseHeight;
+                    baseX = (Data[i][2] - baseLeft) * baseWidth;
+                    baseY = (Data[i][1] - baseTop) * baseHeight;
                     rads = 3.1415927*baseRotation/180;
                     finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
                     finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
-                    if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - storageList[i+7].get("current") + baseRotation
-                    else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - storageList[i+7].get("current") + baseRotation
-                    else finalRotation = storageList[i+7].get("current") + baseRotation;
+                    if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i][7] + baseRotation
+                    else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i][7] + baseRotation
+                    else finalRotation = Data[i][7] + baseRotation;
                     newText = createObj("text", 
                         {"_pageid":page,
                         "top":finalY, 
                         "left":finalX, 
-                        "width":storageList[i+3].get("current") * baseScale, 
-                        "height":storageList[i+4].get("current") * baseScale, 
-                        "text":storageList[i+5].get("current"), 
-                        "font_size":storageList[i+6].get("current") * baseScale, 
+                        "width":Data[i][3] * baseScale, 
+                        "height":Data[i][4] * baseScale, 
+                        "text":Data[i][5], 
+                        "font_size":Data[i][6] * baseScale, 
                         "rotation":finalRotation, 
-                        "color":storageList[i+8].get("current"), 
-                        "font_family":storageList[i+9].get("current"), 
-                        "layer":storageList[i+10].get("current"), 
-                        "controlledby":storageList[i+11].get("current")
+                        "color":Data[i][8], 
+                        "font_family":Data[i][9], 
+                        "layer":Data[i][10], 
+                        "controlledby":Data[i][11]
                     });
-                }
-            }
+                } 
             sendChat(msg.who,"Finished converting "+baseName);
+            }
         }
         else 
         {
@@ -414,5 +377,5 @@ on("chat:message", function(msg) {
             if (Storage.length > 1) sendChat(msg.who,"Too many storage objects named "+baseName);
             if (Storage.length < 1) sendChat(msg.who,"No storage objects named "+baseName);
         }
-    }
+    } 
 });
