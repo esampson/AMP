@@ -38,6 +38,7 @@ textProps = ["top", "left", "width", "height", "text", "font_size", "rotation", 
     createObj = function() {
         obj = oldCreateObj.apply(this, arguments);
         if (obj.get("_type") == 'attribute') obj.fbpath = '/char-attribs/char/'+ obj.get("_characterid") +'/'+ obj.get("_id");
+        if (obj.get("_type") == 'character') obj.fbpath = obj.changed._fbpath.replace(/([^\/]*\/){4}/, "/");
         return obj;
     }
 }())
@@ -134,18 +135,6 @@ on("chat:message", function(msg) {
         });
         if (Base.length == 1)
         {
-            try 
-            {
-                storage = createObj("character", {
-                    name: baseName,
-                    imgsrc : Base[0].get("imgsrc"),
-                    avatar :  Base[0].get("imgsrc")
-                });
-            }
-            catch(err)
-            {
-
-            }
             dObject = [];
             dObject[0] = "base";
             for ( p = 0; p < graphicsProps.length; p++ )
@@ -207,9 +196,27 @@ on("chat:message", function(msg) {
                 Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);;
 				dIndex++
             }
-            setup(storage,"Data",Data);
+            dString = Base64.encode(JSON.stringify(Data));
+            try 
+            {
+                storage = createObj("character", {
+                    gmnotes: "dString",
+                    bio: "dString",
+                    name: baseName,
+                    imgsrc : Base[0].get("imgsrc"),
+                    avatar :  Base[0].get("imgsrc"),
+                });
+            }
+            catch(err)
+            {
+                
+            }
+            storage.set('gmnotes',Base64.encode(JSON.stringify(Data)));
             sendChat(msg.who,"Conversion for " + baseName + " created");
-        } else sendChat(msg.who,"Naming problem with conversion");
+        } else 
+        {
+            sendChat(msg.who,"Naming problem with conversion (are you sure you are using the player page?)");
+        }
     } else if (msg.content.substring(0,8) == "!Convert")
     {
         baseName = msg.content.substr(9);
@@ -226,149 +233,146 @@ on("chat:message", function(msg) {
         });
         if (Base.length == 1 && Storage.length == 1)
         {
-            storageList = findObjs({
-                _type: "attribute",
-                _characterid: Storage[0].get("_id"),
-                name:"Data"
-            });
-            jData = storageList[0].get("current");
-            Data = [];
-            for (i = 0; i < jData.length; i++)
-                Data[i] = JSON.parse(jData[i]);
-            baseLeft = Data[0][3];
-            baseTop = Data[0][4];
-            baseLeftAdj = Base[0].get("left") - Data[0][3];
-            baseTopAdj = Base[0].get("top") - Data[0][4];
-            baseWidth = Base[0].get("width") / Data[0][5];
-            baseHeight = Base[0].get("height") / Data[0][6];
-            baseScale = (baseWidth  + baseHeight)/2;
-            baseRotation = Base[0].get("rotation") - Data[0][7];
-            if ( Base[0].get("flipv") !== Data[0][10] ) baseHeight = baseHeight * -1;
-            if ( Base[0].get("fliph") !== Data[0][11] ) baseWidth = baseWidth * -1;
-            for ( i = 1; i < Data.length; i++) {
-                if ( Data[i][0] == "graphic") 
-                {
-                    baseX = (Data[i][3] - baseLeft) * baseWidth;
-                    baseY = (Data[i][4] - baseTop) * baseHeight;
-                    rads = 3.1415927*baseRotation/180;
-                    finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
-                    finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
-                    if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i][7] + baseRotation
-                    else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i][7] + baseRotation
-                    else finalRotation = Data[i][7] + baseRotation;
-                    newImg = createObj("graphic", 
-                        {"_pageid":page,
-                        "imgsrc":Data[i][1],
-                        "name":Data[i][2],
-                        "left":finalX,
-                        "top":finalY,
-                        "width":Data[i][5] * baseScale,
-                        "height":Data[i][6] * baseScale,
-                        "rotation":finalRotation,
-                        "layer":Data[i][8],
-                        "isdrawing":Data[i][9],
-                        "flipv":Data[i][0],
-                        "fliph":Data[i][11],
-                        "gmnotes":Data[i][12],
-                        "controlledby":Data[i][13],
-                        "bar1_value":Data[i][14],
-                        "bar1_max":Data[i][15],
-                        "bar1_link":Data[i][16],
-                        "bar2_value":Data[i][17],
-                        "bar2_max":Data[i][18],
-                        "bar2_link":Data[i][19],
-                        "bar3_value":Data[i][20],
-                        "bar3_max":Data[i][21],
-                        "bar3_link":Data[i][22],
-                        "represents":Data[i][23],
-                        "aura1_radius":Data[i][24],
-                        "aura1_color":Data[i][25],
-                        "aura1_square":Data[i][26],
-                        "aura2_radius":Data[i][27],
-                        "aura2_color":Data[i][28],
-                        "aura2_square":Data[i][29],
-                        "tint_color":Data[i][30],
-                        "statusmarkers":Data[i][31],
-                        "showname":Data[i][32],
-                        "showplayers_name":Data[i][33],
-                        "showplayers_bar1":Data[i][34],
-                        "showplayers_bar2":Data[i][35],
-                        "showplayers_bar3":Data[i][36],
-                        "showplayers_aura1":Data[i][37],
-                        "showplayers_aura2":Data[i][38],
-                        "playersedit_name":Data[i][39],
-                        "playersedit_bar1":Data[i][40],
-                        "playersedit_bar2":Data[i][41],
-                        "playersedit_bar3":Data[i][42],
-                        "playersedit_aura1":Data[i][43],
-                        "playersedit_aura2":Data[i][44],
-                        "light_radius":Data[i][45] * baseScale,
-                        "light_dimradius":Data[i][46] * baseScale,
-                        "light_otherplayers":Data[i][47],
-                        "light_hassight":Data[i][48],
-                        "light_angle":Data[i][49],
-                        "light_losangle":Data[i][50],
-                        "sides":Data[i][51],
-                        "currentSide":Data[i][52],
-                        "lastmove":Data[i][53],
-                        "_subtype":Data[i][54],
-                        "_cardid":Data[i][55]
-                    });
-                } 
-                if ( Data[i][0] == "path") 
-                {                        
-                    baseX = (Data[i][8] - baseLeft) * baseWidth;
-                    baseY = (Data[i][7] - baseTop) * baseHeight;
-                    rads = 3.1415927*baseRotation/180;
-                    finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
-                    finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
-                    shiftX = finalX - (Data[i][8] - baseLeft) - Base[0].get("left");
-                    shiftY = finalY - (Data[i][7] - baseTop) - Base[0].get("top");
-                    newP = rotatePath(Data[i][13], baseRotation * -1 - Data[i][3], baseWidth, baseHeight, Data[i][8],Data[i][7]);
-            
-                    newPath = createObj("path", 
-                        {"_pageid":page,
-                        "fill":Data[i][1],
-                        "stroke":Data[i][2],
-                        "rotation":0,
-                        "stroke_width":Data[i][4],
-                        "width":newP[2][0],
-                        "height":newP[2][1],
-                        "top":newP[1][1]-baseTop+Base[0].get("top")+shiftY,
-                        "left":newP[1][0]-baseLeft+Base[0].get("left")+shiftX,
-                        "scaleX":1,
-                        "scaleY":1,
-                        "layer":Data[i][12],
-                        "_path":newP[0] 
-                    }); 
+            Storage[0].get("gmnotes", function(notes) {
+                jData = JSON.parse(Base64.decode(notes));
+                Data = [];
+                for (i = 0; i < jData.length; i++)
+                    Data[i] = JSON.parse(jData[i]);
+                baseLeft = Data[0][3];
+                baseTop = Data[0][4];
+                baseLeftAdj = Base[0].get("left") - Data[0][3];
+                baseTopAdj = Base[0].get("top") - Data[0][4];
+                baseWidth = Base[0].get("width") / Data[0][5];
+                baseHeight = Base[0].get("height") / Data[0][6];
+                baseScale = (baseWidth  + baseHeight)/2;
+                baseRotation = Base[0].get("rotation") - Data[0][7];
+                if ( Base[0].get("flipv") !== Data[0][10] ) baseHeight = baseHeight * -1;
+                if ( Base[0].get("fliph") !== Data[0][11] ) baseWidth = baseWidth * -1;
+                for ( i = 1; i < Data.length; i++) {
+                    if ( Data[i][0] == "graphic") 
+                    {
+                        baseX = (Data[i][3] - baseLeft) * baseWidth;
+                        baseY = (Data[i][4] - baseTop) * baseHeight;
+                        rads = 3.1415927*baseRotation/180;
+                        finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
+                        finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
+                        if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i][7] + baseRotation
+                        else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i][7] + baseRotation
+                        else finalRotation = Data[i][7] + baseRotation;
+                        newImg = createObj("graphic", 
+                            {"_pageid":page,
+                            "imgsrc":Data[i][1],
+                            "name":Data[i][2],
+                            "left":finalX,
+                            "top":finalY,
+                            "width":Data[i][5] * baseScale,
+                            "height":Data[i][6] * baseScale,
+                            "rotation":finalRotation,
+                            "layer":Data[i][8],
+                            "isdrawing":Data[i][9],
+                            "flipv":Data[i][0],
+                            "fliph":Data[i][11],
+                            "gmnotes":Data[i][12],
+                            "controlledby":Data[i][13],
+                            "bar1_value":Data[i][14],
+                            "bar1_max":Data[i][15],
+                            "bar1_link":Data[i][16],
+                            "bar2_value":Data[i][17],
+                            "bar2_max":Data[i][18],
+                            "bar2_link":Data[i][19],
+                            "bar3_value":Data[i][20],
+                            "bar3_max":Data[i][21],
+                            "bar3_link":Data[i][22],
+                            "represents":Data[i][23],
+                            "aura1_radius":Data[i][24],
+                            "aura1_color":Data[i][25],
+                            "aura1_square":Data[i][26],
+                            "aura2_radius":Data[i][27],
+                            "aura2_color":Data[i][28],
+                            "aura2_square":Data[i][29],
+                            "tint_color":Data[i][30],
+                            "statusmarkers":Data[i][31],
+                            "showname":Data[i][32],
+                            "showplayers_name":Data[i][33],
+                            "showplayers_bar1":Data[i][34],
+                            "showplayers_bar2":Data[i][35],
+                            "showplayers_bar3":Data[i][36],
+                            "showplayers_aura1":Data[i][37],
+                            "showplayers_aura2":Data[i][38],
+                            "playersedit_name":Data[i][39],
+                            "playersedit_bar1":Data[i][40],
+                            "playersedit_bar2":Data[i][41],
+                            "playersedit_bar3":Data[i][42],
+                            "playersedit_aura1":Data[i][43],
+                            "playersedit_aura2":Data[i][44],
+                            "light_radius":Data[i][45] * baseScale,
+                            "light_dimradius":Data[i][46] * baseScale,
+                            "light_otherplayers":Data[i][47],
+                            "light_hassight":Data[i][48],
+                            "light_angle":Data[i][49],
+                            "light_losangle":Data[i][50],
+                            "sides":Data[i][51],
+                            "currentSide":Data[i][52],
+                            "lastmove":Data[i][53],
+                            "_subtype":Data[i][54],
+                            "_cardid":Data[i][55]
+                        });
+                    } 
+                    if ( Data[i][0] == "path") 
+                    {                        
+                        baseX = (Data[i][8] - baseLeft) * baseWidth;
+                        baseY = (Data[i][7] - baseTop) * baseHeight;
+                        rads = 3.1415927*baseRotation/180;
+                        finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
+                        finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
+                        shiftX = finalX - (Data[i][8] - baseLeft) - Base[0].get("left");
+                        shiftY = finalY - (Data[i][7] - baseTop) - Base[0].get("top");
+                        newP = rotatePath(Data[i][13], baseRotation * -1 - Data[i][3], baseWidth, baseHeight, Data[i][8],Data[i][7]);
+                
+                        newPath = createObj("path", 
+                            {"_pageid":page,
+                            "fill":Data[i][1],
+                            "stroke":Data[i][2],
+                            "rotation":0,
+                            "stroke_width":Data[i][4],
+                            "width":newP[2][0],
+                            "height":newP[2][1],
+                            "top":newP[1][1]-baseTop+Base[0].get("top")+shiftY,
+                            "left":newP[1][0]-baseLeft+Base[0].get("left")+shiftX,
+                            "scaleX":1,
+                            "scaleY":1,
+                            "layer":Data[i][12],
+                            "_path":newP[0] 
+                        }); 
+                    }
+                    if ( Data[i][0] == "text") 
+                    {
+                        baseX = (Data[i][2] - baseLeft) * baseWidth;
+                        baseY = (Data[i][1] - baseTop) * baseHeight;
+                        rads = 3.1415927*baseRotation/180;
+                        finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
+                        finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
+                        if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i][7] + baseRotation
+                        else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i][7] + baseRotation
+                        else finalRotation = Data[i][7] + baseRotation;
+                        newText = createObj("text", 
+                            {"_pageid":page,
+                            "top":finalY, 
+                            "left":finalX, 
+                            "width":Data[i][3] * baseScale, 
+                            "height":Data[i][4] * baseScale, 
+                            "text":Data[i][5], 
+                            "font_size":Data[i][6] * baseScale, 
+                            "rotation":finalRotation, 
+                            "color":Data[i][8], 
+                            "font_family":Data[i][9], 
+                            "layer":Data[i][10], 
+                            "controlledby":Data[i][11]
+                        });
+                    } 
                 }
-                if ( Data[i][0] == "text") 
-                {
-                    baseX = (Data[i][2] - baseLeft) * baseWidth;
-                    baseY = (Data[i][1] - baseTop) * baseHeight;
-                    rads = 3.1415927*baseRotation/180;
-                    finalX = Math.cos(rads) * baseX - Math.sin(rads) * baseY + Base[0].get("left");
-                    finalY = Math.cos(rads) * baseY + Math.sin(rads) * baseX + Base[0].get("top");
-                    if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i][7] + baseRotation
-                    else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i][7] + baseRotation
-                    else finalRotation = Data[i][7] + baseRotation;
-                    newText = createObj("text", 
-                        {"_pageid":page,
-                        "top":finalY, 
-                        "left":finalX, 
-                        "width":Data[i][3] * baseScale, 
-                        "height":Data[i][4] * baseScale, 
-                        "text":Data[i][5], 
-                        "font_size":Data[i][6] * baseScale, 
-                        "rotation":finalRotation, 
-                        "color":Data[i][8], 
-                        "font_family":Data[i][9], 
-                        "layer":Data[i][10], 
-                        "controlledby":Data[i][11]
-                    });
-                } 
-            sendChat(msg.who,"Finished converting "+baseName);
-            }
+                sendChat(msg.who,"Finished converting "+baseName);
+            });
         }
         else 
         {
