@@ -23,38 +23,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-baseProps = ["imgsrc", "name", "left", "top", "width", "height", "rotation", "layer", "isdrawing","flipv","fliph","gmnotes","controlledby","bar1_value","bar1_max","bar1_link","bar2_value","bar2_max","bar2_link","bar3_value","bar3_max","bar3_link","represents",
-    "aura1_radius","aura1_color","aura1_square","aura2_radius","aura2_color","aura2_square","tint_color","statusmarkers","showname","showplayers_name","showplayers_bar1","showplayers_bar2","showplayers_bar3",
-    "showplayers_aura1","showplayers_aura2","playersedit_name","playersedit_bar1","playersedit_bar2","playersedit_bar3","playersedit_aura1","playersedit_aura2","light_radius","light_dimradius","light_otherplayers","light_hassight","light_angle",
-    "light_losangle","sides","currentSide","lastmove","_subtype","_cardid"];
-    
-graphicsProps = {};
-
-graphicsProps.write = ["imgsrc", "name", "left", "top", "width", "height", "rotation", "layer", "isdrawing","flipv","fliph","gmnotes","controlledby","bar1_value","bar1_max","bar1_link","bar2_value","bar2_max","bar2_link","bar3_value","bar3_max","bar3_link","represents",
-    "aura1_radius","aura1_color","aura1_square","aura2_radius","aura2_color","aura2_square","tint_color","statusmarkers","showname","showplayers_name","showplayers_bar1","showplayers_bar2","showplayers_bar3",
-    "showplayers_aura1","showplayers_aura2","playersedit_name","playersedit_bar1","playersedit_bar2","playersedit_bar3","playersedit_aura1","playersedit_aura2","light_radius","light_dimradius","light_otherplayers","light_hassight","light_angle",
-    "light_losangle","sides","currentSide","lastmove","_subtype","_cardid"];
-    
-graphicsProps.read = ["imgsrc", "name", "layer", "isdrawing", "flipv", "fliph", "gmnotes", "controlledby", "bar1_value", "bar1_max",
-    "bar1_link", "bar2_value", "bar2_max", "bar2_link", "bar3_value", "bar3_max", "bar3_link", "represents", "aura1_radius",
-    "aura1_color", "aura1_square", "aura2_radius", "aura2_color", "aura2_square", "tint_color", "statusmarkers", "showname", 
-    "showplayers_name", "showplayers_bar1", "showplayers_bar2", "showplayers_bar3", "showplayers_aura1", "showplayers_aura2",
-    "playersedit_name", "playersedit_bar1", "playersedit_bar2", "playersedit_bar3", "playersedit_aura1", "playersedit_aura2",
-    "light_otherplayers", "light_hassight", "light_angle", "light_losangle", "sides", "currentSide", "lastmove", "_subtype",
-    "_cardid"]
-    
-pathProps = {};
-
-pathProps.write = ["fill", "stroke", "stroke_width", "controlledby", "layer"];
-
-pathProps.read = ["fill", "stroke", "stroke_width", "controlledby", "layer"];
-    
-textProps = {};
-
-textProps.write = ["top", "left", "width", "height", "text", "font_size", "rotation", "color", "font_family", "layer", "controlledby"];
-
-textProps.read = ["text", "color", "font_family", "layer", "controlledby"];
-
 (function() {
     oldCreateObj = createObj;
     createObj = function() {
@@ -64,15 +32,6 @@ textProps.read = ["text", "color", "font_family", "layer", "controlledby"];
         return obj;
     }
 }())
-    
-function setup(obj, attr, base) {
-    object = createObj("attribute", {
-        _characterid: obj.get("_id"),
-        name: attr,
-        current: base,
-    });
-    return;
-}
 
 function IsJsonString(str) {
     try {
@@ -160,7 +119,7 @@ on("chat:message", function(msg) {
             dObject = {};
             dObject["type"] = "base";
             for ( p = 0; p < baseProps.length; p++ )
-				dObject[baseProps[p]] = Base[0].get(baseProps[p]);
+    			dObject[baseProps[p]] = Base[0].get(baseProps[p]);
             Data[dIndex] = JSON.stringify(dObject);
 			dIndex++;
             graphics = findObjs({
@@ -171,10 +130,8 @@ on("chat:message", function(msg) {
             {
                 if (graphics[i].get("name") !== baseName) 
                 {
-                    dObject = {};
+                    dObject = graphics[i];
                     dObject["type"] = "graphic";
-                    for ( p = 0; p < graphicsProps.write.length; p++ )
-						dObject[graphicsProps.write[p]] = graphics[i].get(graphicsProps.write[p]);
                     Data[dIndex] = JSON.stringify(dObject);
 					dIndex++;
                 }
@@ -187,7 +144,7 @@ on("chat:message", function(msg) {
             {
                 cPath=rotatePath(paths[i].get("_path"),0-paths[i].get("rotation"),paths[i].get("scaleX"),paths[i].get("scaleY"),paths[i].get("left"),
                     paths[i].get("top"));
-                dObject = {};
+                dObject = paths[i];
                 dObject["type"] = "path";
                 dObject["fill"] = paths[i].get("fill");
                 dObject["stroke"] = paths[i].get("stroke");
@@ -199,8 +156,6 @@ on("chat:message", function(msg) {
                 dObject["scaleX"] = 1;
                 dObject["scaleY"] = 1;
                 dObject["_path"] = cPath[0];
-                for ( p = 0; p < pathProps.write.length; p++ )
-					dObject[pathProps.write[p]] = paths[i].get(pathProps.write[p]);
                 Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);;
 				dIndex++;
             }
@@ -210,10 +165,8 @@ on("chat:message", function(msg) {
             });
             for ( i = 0; i < texts.length; i++ )
             {
-                dObject = {};
+                dObject = texts[i];
                 dObject["type"] = "text";
-                for ( p = 0; p < textProps.write.length; p++ )
-					dObject[textProps.write[p]] = texts[i].get(textProps.write[p]);
                 Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);;
 				dIndex++
             }
@@ -280,7 +233,7 @@ on("chat:message", function(msg) {
                         if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i].rotation + baseRotation
                         else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i].rotation + baseRotation
                         else finalRotation = Data[i].rotation + baseRotation;
-                        newObj = {};
+                        newObj = Data[i];
                         newObj["_pageid"] = page;
                         newObj["left"] = finalX;
                         newObj["top"] = finalY;
@@ -289,8 +242,6 @@ on("chat:message", function(msg) {
                         newObj["rotation"] = finalRotation;
                         newObj["light_radius"] = Data[i].light_radius * baseScale;
                         newObj["light_dimradius"] = Data[i].light_dimradius * baseScale;
-                        for (p = 0; p < graphicsProps.read.length; p++)
-                            newObj[graphicsProps.read[p]] = Data[i][graphicsProps.read[p]];
                         newImg = createObj("graphic", newObj);
                     } 
                     if ( Data[i].type == "path") 
@@ -304,7 +255,7 @@ on("chat:message", function(msg) {
                         shiftY = finalY - (Data[i].top - baseTop) - Base[0].get("top");
                         newP = rotatePath(Data[i]._path, baseRotation * -1 - Data[i].rotation, baseWidth, baseHeight, 
                             Data[i].left,Data[i].top);
-                        newObj = {};
+                        newObj = Data[i];
                         newObj["_pageid"] = page;
                         newObj["rotation"] = 0;
                         newObj["width"] = newP[2][0];
@@ -314,8 +265,6 @@ on("chat:message", function(msg) {
                         newObj["scaleX"] = 1;
                         newObj["scaleY"] = 1;
                         newObj["_path"] = newP[0];
-                        for (p = 0; p < pathProps.read.length; p++)
-                            newObj[pathProps.read[p]] = Data[i][pathProps.read[p]];
                         newPath = createObj("path", newObj); 
                     }
                     if ( Data[i].type == "text") 
@@ -328,7 +277,7 @@ on("chat:message", function(msg) {
                         if (baseWidth < 0 && baseHeight > 0) finalRotation = 180 - Data[i].rotation + baseRotation
                         else if (baseWidth > 0 && baseHeight < 0) finalRotation = 180 - Data[i].rotation + baseRotation
                         else finalRotation = Data[i].rotation + baseRotation;
-                        newObj = {};
+                        newObj = Data[i];;
                         newObj["_pageid"] = page;
                         newObj["top"] = finalY;
                         newObj["left"] = finalX; 
@@ -336,8 +285,6 @@ on("chat:message", function(msg) {
                         newObj["height"] = Data[i].height * baseScale;
                         newObj["font_size"] = Data[i].font_size * baseScale;
                         newObj["rotation"] = finalRotation;
-                        for ( p = 0; p < pathProps.read.length; p++)
-                            newObj[textProps.read[p]] = Data[i][textProps.read[p]];
                         newText = createObj("text", newObj);
                     }
                 } 
