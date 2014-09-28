@@ -146,8 +146,6 @@ on("chat:message", function(msg) {
                     paths[i].get("top"));
                 dObject = paths[i];
                 dObject["type"] = "path";
-                dObject["fill"] = paths[i].get("fill");
-                dObject["stroke"] = paths[i].get("stroke");
                 dObject["rotation"] = 0;
                 dObject["width"] = cPath[2][0];
                 dObject["height"] = cPath[2][1];
