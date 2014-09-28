@@ -116,10 +116,7 @@ on("chat:message", function(msg) {
         });
         if (Base.length == 1)
         {
-            dObject = {};
-            dObject["type"] = "base";
-            for ( p = 0; p < baseProps.length; p++ )
-    			dObject[baseProps[p]] = Base[0].get(baseProps[p]);
+            dObject = Base[0];
             Data[dIndex] = JSON.stringify(dObject);
 			dIndex++;
             graphics = findObjs({
@@ -131,9 +128,8 @@ on("chat:message", function(msg) {
                 if (graphics[i].get("name") !== baseName) 
                 {
                     dObject = graphics[i];
-                    dObject["type"] = "graphic";
                     Data[dIndex] = JSON.stringify(dObject);
-					dIndex++;
+                    dIndex++;
                 }
             }
             paths = findObjs({
@@ -145,7 +141,6 @@ on("chat:message", function(msg) {
                 cPath=rotatePath(paths[i].get("_path"),0-paths[i].get("rotation"),paths[i].get("scaleX"),paths[i].get("scaleY"),paths[i].get("left"),
                     paths[i].get("top"));
                 dObject = paths[i];
-                dObject["type"] = "path";
                 dObject["rotation"] = 0;
                 dObject["width"] = cPath[2][0];
                 dObject["height"] = cPath[2][1];
@@ -154,8 +149,8 @@ on("chat:message", function(msg) {
                 dObject["scaleX"] = 1;
                 dObject["scaleY"] = 1;
                 dObject["_path"] = cPath[0];
-                Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);;
-				dIndex++;
+                Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);
+                dIndex++;
             }
             texts = findObjs({
                 _type: "text",
@@ -164,9 +159,8 @@ on("chat:message", function(msg) {
             for ( i = 0; i < texts.length; i++ )
             {
                 dObject = texts[i];
-                dObject["type"] = "text";
-                Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);;
-				dIndex++
+                Data[dIndex] = Data[dIndex] = JSON.stringify(dObject);
+                dIndex++;
             }
             dString = Base64.encode(JSON.stringify(Data));
             try 
@@ -221,7 +215,7 @@ on("chat:message", function(msg) {
                 if ( Base[0].get("flipv") !== Data[0].flipv ) baseHeight = baseHeight * -1;
                 if ( Base[0].get("fliph") !== Data[0].fliph ) baseWidth = baseWidth * -1;
                 for ( i = 1; i < Data.length; i++) {
-                    if ( Data[i].type == "graphic") 
+                    if ( Data[i]._type == "graphic") 
                     {
                         baseX = (Data[i].left - baseLeft) * baseWidth;
                         baseY = (Data[i].top - baseTop) * baseHeight;
@@ -242,7 +236,7 @@ on("chat:message", function(msg) {
                         newObj["light_dimradius"] = Data[i].light_dimradius * baseScale;
                         newImg = createObj("graphic", newObj);
                     } 
-                    if ( Data[i].type == "path") 
+                    if ( Data[i]._type == "path") 
                     {                        
                         baseX = (Data[i].left - baseLeft) * baseWidth;
                         baseY = (Data[i].top - baseTop) * baseHeight;
@@ -265,7 +259,7 @@ on("chat:message", function(msg) {
                         newObj["_path"] = newP[0];
                         newPath = createObj("path", newObj); 
                     }
-                    if ( Data[i].type == "text") 
+                    if ( Data[i]._type == "text") 
                     {
                         baseX = (Data[i].left - baseLeft) * baseWidth;
                         baseY = (Data[i].top - baseTop) * baseHeight;
